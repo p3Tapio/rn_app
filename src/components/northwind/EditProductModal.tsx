@@ -4,13 +4,19 @@ import { styles } from '../../Styles';
 import { EditModalProps, Product } from './productType';
 import { AntDesign, Foundation } from '@expo/vector-icons';
 import { Switch, TextInput } from 'react-native-gesture-handler';
-import { priceValidation, nameValidation } from './validators';
+import { numericValidation, nameValidation, stringValidation, urlValidation } from './validators';
+import CategoryPicker from './pickers/CategoryPicker';
+import SupplierPicker from './pickers/SupplierPicker';
 
-const EditProductModal: React.FC<EditModalProps> = ({ setProductForModal, productForModal, editProduct, setEditOpen }: EditModalProps) => {
+const EditProductModal: React.FC<EditModalProps> = ({ setProductForModal, productForModal, editProduct, setEditOpen, categories, suppliers  }: EditModalProps) => {
 
     const [editedProduct, setEditedProduct] = useState<Product | undefined>(productForModal)
     const [focused, setFocused] = useState<string | null>(null)
-
+    const [dropdownCategory, setDropdownCategory] = useState<number>(productForModal && productForModal.categoryId ? productForModal.categoryId : 0)
+    const [categoryWarning, setCategoryWarning] = useState<boolean>(false)
+    const [dropdownSupplier, setDropdownSupplier] = useState<number>(productForModal && productForModal.supplierId ? productForModal.supplierId : 0);
+    const [supplierWarning, setSupplierWarning] = useState<boolean>(false)
+     
     if (!editedProduct) return null;
     return (
         <Modal animationType="slide" transparent={true} visible={productForModal !== undefined} >
@@ -36,12 +42,12 @@ const EditProductModal: React.FC<EditModalProps> = ({ setProductForModal, produc
                             <Text>Hinta: </Text>
                             <TextInput style={focused === 'hinta' ? styles.textInputFocused : styles.textInputField}
                                 onFocus={() => setFocused('hinta')} onBlur={() => setFocused(null)}
-                                value={editedProduct.unitPrice.toString() } autoCapitalize="none" selectTextOnFocus={true} keyboardType="numeric"
-                                onChangeText={(text) => setEditedProduct({ ...editedProduct, unitPrice:  text })} />
+                                value={editedProduct.unitPrice.toString()} autoCapitalize="none" selectTextOnFocus={true} keyboardType="numeric"
+                                onChangeText={(text) => setEditedProduct({ ...editedProduct, unitPrice: text })} />
 
                         </View>
-                        <View style={priceValidation(editedProduct.unitPrice.toString()) ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
-                            {!priceValidation(editedProduct.unitPrice.toString()) && <Text style={styles.errorText}>Anna hinta muodossa n.zz!</Text>}
+                        <View style={(numericValidation(editedProduct.unitPrice) || editedProduct.unitPrice === '') ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!numericValidation(editedProduct.unitPrice) && editedProduct.unitPrice !== '') && <Text style={styles.errorText}>Anna hinta muodossa n.zz!</Text>}
                         </View>
                         <View style={styles.productDetailRow}>
                             <Text>Varastossa: </Text>
@@ -50,6 +56,9 @@ const EditProductModal: React.FC<EditModalProps> = ({ setProductForModal, produc
                                 value={editedProduct.unitsInStock.toString()} autoCapitalize="none" selectTextOnFocus={true} keyboardType="numeric"
                                 onChangeText={(text) => setEditedProduct({ ...editedProduct, unitsInStock: Number(text) })} />
                         </View>
+                        <View style={(numericValidation(editedProduct.unitsInStock) || editedProduct.unitsInStock === undefined) ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!numericValidation(editedProduct.unitsInStock) && editedProduct.unitsInStock !== undefined) && <Text style={styles.errorText}>Anna varastomäärä numeroina!</Text>}
+                        </View>
                         <View style={styles.productDetailRow}>
                             <Text>Hälytysraja: </Text>
                             <TextInput style={focused === 'raja' ? styles.textInputFocused : styles.textInputField}
@@ -57,13 +66,18 @@ const EditProductModal: React.FC<EditModalProps> = ({ setProductForModal, produc
                                 value={editedProduct.reorderLevel.toString()} autoCapitalize="none" selectTextOnFocus={true} keyboardType="numeric"
                                 onChangeText={(text) => setEditedProduct({ ...editedProduct, reorderLevel: Number(text) })} />
                         </View>
+                        <View style={(numericValidation(editedProduct.reorderLevel) || editedProduct.reorderLevel === undefined) ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!numericValidation(editedProduct.reorderLevel) && editedProduct.reorderLevel !== undefined) && <Text style={styles.errorText}>Anna hälytysraja muodossa x.xx!</Text>}
+                        </View>
                         <View style={styles.productDetailRow}>
-                            <Text>Kategoria: </Text>
-                            {/* dropdown */}
-                            <TextInput style={focused === 'kate' ? styles.textInputFocused : styles.textInputField}
-                                onFocus={() => setFocused('kate')} onBlur={() => setFocused(null)}
-                                value={editedProduct.categoryId.toString()} autoCapitalize="none" selectTextOnFocus={true} keyboardType="numeric"
-                                onChangeText={(text) => setEditedProduct({ ...editedProduct, categoryId: Number(text) })} />
+                            <Text>Tilauksessa: </Text>
+                            <TextInput style={focused === 'tilauksia' ? styles.textInputFocused : styles.textInputField}
+                                onFocus={() => setFocused('tilauksia')} onBlur={() => setFocused(null)}
+                                value={editedProduct.unitsOnOrder.toString()} autoCapitalize="none" selectTextOnFocus={true} keyboardType="numeric"
+                                onChangeText={(text) => setEditedProduct({ ...editedProduct, unitsOnOrder: Number(text) })} />
+                        </View>
+                        <View style={(numericValidation(editedProduct.unitsOnOrder) || editedProduct.unitsOnOrder === undefined) ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!numericValidation(editedProduct.unitsOnOrder) && editedProduct.unitsOnOrder !== undefined) && <Text style={styles.errorText}>Tarkasta tilausmäärän muoto</Text>}
                         </View>
                         <View style={styles.productDetailRow}>
                             <Text>Määrä: </Text>
@@ -72,12 +86,8 @@ const EditProductModal: React.FC<EditModalProps> = ({ setProductForModal, produc
                                 value={editedProduct.quantityPerUnit} autoCapitalize="none" selectTextOnFocus={true}
                                 onChangeText={(text) => setEditedProduct({ ...editedProduct, quantityPerUnit: text })} />
                         </View>
-                        <View style={styles.productDetailRow}>
-                            <Text>Toimittaja: </Text>
-                            <TextInput style={focused === 'toim' ? styles.textInputFocused : styles.textInputField}
-                                onFocus={() => setFocused('toim')} onBlur={() => setFocused(null)}
-                                value={editedProduct.supplierId.toString()} autoCapitalize="none" selectTextOnFocus={true} keyboardType="numeric"
-                                onChangeText={(text) => setEditedProduct({ ...editedProduct, supplierId: Number(text) })} />
+                        <View style={(stringValidation(editedProduct.quantityPerUnit) || editedProduct.quantityPerUnit === '') ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!stringValidation(editedProduct.quantityPerUnit) && editedProduct.quantityPerUnit !== '') && <Text style={styles.errorText}>Anna hälytysraja muodossa x.xx!</Text>}
                         </View>
                         <View style={styles.productDetailRow}>
                             <Text>Kuvalinkki: </Text>
@@ -86,9 +96,40 @@ const EditProductModal: React.FC<EditModalProps> = ({ setProductForModal, produc
                                 value={editedProduct.imageLink} autoCapitalize="none" selectTextOnFocus={true}
                                 onChangeText={(text) => setEditedProduct({ ...editedProduct, imageLink: text })} />
                         </View>
+                        <View style={(urlValidation(editedProduct.imageLink) || editedProduct.imageLink === '') ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!urlValidation(editedProduct.imageLink) && editedProduct.imageLink !== '') && <Text style={styles.errorText}>Tarkasta linkki! </Text>}
+                        </View>
+                        <View style={styles.productDetailRow}>
+                            <Text>Kategoria: </Text>
+                            <CategoryPicker
+                                categories={categories}
+                                setDropdownCategory={setDropdownCategory}
+                                dropdownCategory={dropdownCategory}
+                                setCategoryWarning={setCategoryWarning}
+                                setEditedProduct={setEditedProduct}
+                                editedProduct={editedProduct}
+                            />
+                        </View>
+                        <View style={!categoryWarning ? { marginTop: -1, marginBottom: 5 } : { alignSelf: 'flex-end', marginTop: -15, marginRight: 35, marginBottom: 5 }}>
+                            {categoryWarning && <Text style={styles.errorText}>Aseta tuotekategoria</Text>}
+                        </View>
+                        <View style={styles.productDetailRow}>
+                            <Text>Toimittaja: </Text>
+                            <SupplierPicker
+                                suppliers={suppliers}
+                                setDropdownSupplier={setDropdownSupplier}
+                                dropdownSupplier={dropdownSupplier}
+                                setSupplierWarning={setSupplierWarning}
+                                setEditedProduct={setEditedProduct}
+                                editedProduct={editedProduct}
+                            />
+                        </View>
+                        <View style={!supplierWarning ? { marginTop: -1, marginBottom: 5 } : { alignSelf: 'flex-end', marginTop: -15, marginRight: 35, marginBottom: 5 }}>
+                            {supplierWarning && <Text style={styles.errorText}>Aseta tuottaja</Text>}
+                        </View>
                         <View style={styles.productDetailRow}>
                             <Text>Saatavilla: </Text>
-                            <Text style={{ marginLeft: 150, fontWeight: 'bold' }}> {editedProduct.discontinued ? 'Kyllä' : 'Ei'}</Text>
+                            <Text style={{ marginLeft: 150, fontWeight: 'bold' }}> {!editedProduct.discontinued ? 'Kyllä' : 'Ei'}</Text>
                             <Switch value={editedProduct.discontinued} onValueChange={() => setEditedProduct({ ...editedProduct, discontinued: !editedProduct.discontinued })} />
                         </View>
                     </View>

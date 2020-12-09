@@ -4,7 +4,7 @@ import { styles } from '../../Styles';
 import { ProductModalProps } from './productType';
 import { Octicons } from '@expo/vector-icons';
 
-const ProductModal: React.FC<ProductModalProps> = ({ setProductForModal, productForModal, setEditOpen, handleDelete }: ProductModalProps) => {
+const ProductModal: React.FC<ProductModalProps> = ({ setProductForModal, productForModal, setEditOpen, deleteProduct,categories,suppliers }: ProductModalProps) => {
 
     if (!productForModal) return null;
     return (
@@ -24,11 +24,11 @@ const ProductModal: React.FC<ProductModalProps> = ({ setProductForModal, product
                         </View>
                         <View style={styles.productDetailRow}>
                             <Text>Tuottaja: </Text>
-                            <Text>{productForModal.supplierId}</Text>
+                            <Text>{suppliers.filter(x => Number(x.supplierId) === productForModal.supplierId).map(y => {return y.companyName})}</Text>
                         </View>
                         <View style={styles.productDetailRow}>
                             <Text>Tuotekategoria: </Text>
-                            <Text>{productForModal.categoryId}</Text>
+                            <Text>{categories.filter(x => x.categoryId === productForModal.categoryId).map(y => { return y.categoryName })}</Text>
                         </View>
                         <View style={styles.productDetailRow}>
                             <Text>Määrä: </Text>
@@ -43,8 +43,12 @@ const ProductModal: React.FC<ProductModalProps> = ({ setProductForModal, product
                             <Text>{productForModal.unitsInStock}</Text>
                         </View>
                         <View style={styles.productDetailRow}>
+                            <Text>Tilauksessa: </Text>
+                            <Text>{productForModal.unitsOnOrder}</Text>
+                        </View>
+                        <View style={styles.productDetailRow}>
                             <Text>Saatavilla: </Text>
-                            <Text>{productForModal.discontinued ? 'Kyllä' : 'Ei'}</Text>
+                            <Text>{!productForModal.discontinued ? 'Kyllä' : 'Ei'}</Text>
                         </View>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -57,7 +61,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ setProductForModal, product
                         >
                             <Text style={{ color: 'white' }}>Sulje</Text>
                         </TouchableHighlight>
-                        <TouchableHighlight style={{marginTop:5, marginLeft:120}} onPress={()=> handleDelete(productForModal)}>
+                        <TouchableHighlight style={{ marginTop: 5, marginLeft: 120 }} onPress={() => deleteProduct(productForModal)}>
                             <Octicons name="trashcan" size={30} color="black" />
                         </TouchableHighlight>
                         <TouchableHighlight style={{ width: 32, height: 32, marginTop: 5 }} onPress={() => setEditOpen(true)}>

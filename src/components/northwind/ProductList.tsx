@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import Constants from 'expo-constants';
 
-import { BaseProduct, Product } from './productType';
-import { priceValidation, nameValidation } from './validators';
+import { BaseProduct, Product, Category, Supplier } from './productType';
+import { submitValidation } from './validators';
+import { productUrl, getProducts, getCategories, getSuppliers } from './httpRequests';
 
 import { View, Text, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { FontAwesome5, Octicons } from '@expo/vector-icons';
@@ -16,23 +16,27 @@ import EditProductModal from './EditProductModal';
 import CreateProductModal from './CreateProductModal';
 
 const ProductList: React.FC = () => {
-    const productUrl = `${Constants.manifest.extra.careeriaUrl}/products/`
-    const [products, setProducts] = useState<Product[]>([]);
-    const [productForModal, setProductForModal] = useState<Product | undefined>(undefined);
-    const [editOpen, setEditOpen] = useState<boolean>(false);
-    const [createOpen, setCreateOpen] = useState<boolean>(false);
-    const [dropdownCategory, setDropdownCategory] = useState<string>('All')
+    const [products, setProducts] = useState<Product[]>([])
+    const [productList, setProductList] = useState<Product[]>([])
+    const [categories, setCategories] = useState<Category[]>([])
+    const [suppliers, setSuppliers] = useState<Supplier[]>([])
+    const [productForModal, setProductForModal] = useState<Product | undefined>(undefined)
+    const [editOpen, setEditOpen] = useState<boolean>(false)
+    const [createOpen, setCreateOpen] = useState<boolean>(false)
+    const [dropdownCategory, setDropdownCategory] = useState<number>(0)
 
-    useEffect(() => { getProducts(); }, [])
-
-    const getProducts = () => {
-        fetch(productUrl)
-            .then(response => response.json())
-            .then((json: any) => setProducts(json))
-    }
+    useEffect(() => {
+        const initData = () => {
+            getProducts().then(x => setProducts(x));
+            getCategories().then(x => setCategories(x))
+            getSuppliers().then(x => setSuppliers(x))
+            setProductList(products)
+        }
+        initData();
+    }, [])
 
     const editProduct = (edited: Product) => {
-        if (edited && priceValidation(edited.unitPrice.toString()) && nameValidation(edited.productName)) {
+        if (edited && submitValidation(edited)) {
             fetch(`${productUrl}/${edited.productId}`, {
                 method: "PUT",
                 headers: { "Accept": "application/json", "Content-Type": "application/json; charset=utf-8" },
@@ -43,17 +47,20 @@ const ProductList: React.FC = () => {
                         console.log('Result: ', json)
                         Alert.alert(`Tuoteen ${edited.productName} tiedot päivitetty!`)
                         setProducts(products.map(x => x.productId === edited.productId ? edited : x))
+                        setProductList(productList.map(x => x.productId === edited.productId ? edited : x))
                         setProductForModal(undefined)
                         setEditOpen(false)
                     }
                 })
-        } else {
+        }
+        else {
             Alert.alert('Virhe!', 'Tuotetiedot ovat puutteelliset', [{ text: 'sulje' }])
         }
     }
 
     const createNewProduct = (newProduct: BaseProduct) => {
-        if (newProduct && priceValidation(newProduct.unitPrice.toString()) && nameValidation(newProduct.productName)) {
+        // if (newProduct && priceValidation(newProduct.unitPrice.toString()) && nameValidation(newProduct.productName)) {
+        if (newProduct && submitValidation(newProduct)) {
             const productJson: any = JSON.stringify({
                 ...newProduct,
                 unitPrice: parseFloat(newProduct.unitPrice),
@@ -67,19 +74,20 @@ const ProductList: React.FC = () => {
                 .then(json => {
                     if (json) {
                         console.log('result: ', json)
-                        getProducts()
                         setCreateOpen(false)
                         Alert.alert('Onnistui!', `Tuote ${newProduct.productName} lisätty tietoihin`, [{ text: 'sulje' }])
-                        // jos responsissa olisi id eikä nimi, niin ei tarttis toista http-kutsua tuotelistan päivitykseen 
-                        // setProducts(products.concat({...newProduct, productId:json.subString(x, y) })) tms. 
+                        getProducts().then(x => {
+                            setProducts(x)
+                            setProductList(x)
+                        })
                     }
                 })
-        } else {
-            Alert.alert('Virhe!', 'Tuotetiedot ovat puutteelliset', [{ text: 'sulje' }])
+
+
         }
     }
 
-    const handleDelete = (productToDelete: Product) => {
+    const deleteProduct = (productToDelete: Product) => {
         Alert.alert('Poista tuote', `Oletko varma, että haluat poistaa tuotteen ${productToDelete.productName}?`,
             [{
                 text: 'delele', onPress: () => {
@@ -91,6 +99,7 @@ const ProductList: React.FC = () => {
                             const success = json;
                             if (success) {
                                 setProducts(products.filter(x => x.productId !== productToDelete.productId))
+                                setProductList(productList.filter(x => x.productId !== productToDelete.productId))
                                 Alert.alert('Onnistui!', `Tuote ${productToDelete.productName} poistettu. `)
                             }
                             else console.log('Error deleting: ', productToDelete)
@@ -101,15 +110,22 @@ const ProductList: React.FC = () => {
             { text: 'cancel' }])
     }
 
-    if (!products) return null;
+    if (!productList) return null;
+
     return (
         <ScrollView style={{ width: '100%' }}>
             <View style={styles.productHeader}>
                 <FontAwesome5 name="boxes" size={25} color="black" />
                 <Text style={{ fontSize: 14, color: 'black', marginLeft: 15, marginTop: 5 }}>
-                    {`tuotteita yhteensä:  ${products.length !== 0 ? Object.keys(products).length : 'ladataan tietoja'}`}
+                    {`tuotteita yhteensä:  ${productList.length !== 0 ? Object.keys(productList).length : 'ladataan tietoja'}`}
                 </Text>
-                <Pressable onPress={() => getProducts()} style={({ pressed }) => [{ backgroundColor: pressed ? 'lightgray' : 'white' }]}>
+                <Pressable onPress={async () => {
+                    await getProducts().then(x => {
+                        setProducts(x)
+                        setProductList(x)
+                    })
+                }}
+                    style={({ pressed }) => [{ backgroundColor: pressed ? 'lightgray' : 'white' }]}>
                     <Octicons name="sync" size={24} />
                 </Pressable>
             </View>
@@ -118,24 +134,25 @@ const ProductList: React.FC = () => {
                     selectedValue={dropdownCategory}
                     style={{ height: 50, width: '90%' }}
                     prompt='Valitse tuoteryhmä'
-                    onValueChange={(itemValue, itemIndex) => {
-                        console.log('itemValue', itemValue)
-                        setDropdownCategory(itemValue.toString())
-                    }}
-                >
-                    <Picker.Item label="Kaikki tuotteet" value="all" />
-                    <Picker.Item label="Juomat" value="cat1" />
+                    onValueChange={(value, itemIndex) => {
+                        setDropdownCategory(Number(value))
+                        value === 0 ? setProductList(products) : setProductList(products.filter(x => x.categoryId === value))
+                    }} >
+                    {categories.map(c => (
+                        <Picker.Item label={c.categoryName} value={c.categoryId} key={c.categoryId} />
+                    ))}
                 </Picker>
                 <Pressable style={{ marginTop: 15, marginLeft: 10 }} onPress={() => setCreateOpen(true)}>
                     <Octicons name="plus" size={24} color='black' />
                 </Pressable>
             </View>
-            {Object.keys(products).length !== 0
-                ? products.map((product: Product) => (
+            {!products || Object.keys(productList).length !== 0
+                ? productList.map((product: Product) => (
                     <ProductContainer
                         key={product.productId}
                         product={product}
                         setProductForModal={setProductForModal}
+                        categories={categories}
                     />
                 ))
                 : <View style={{ flex: 1, justifyContent: "center", marginTop: 200 }}>
@@ -147,18 +164,24 @@ const ProductList: React.FC = () => {
                     productForModal={productForModal}
                     setEditOpen={setEditOpen}
                     editProduct={editProduct}
+                    categories={categories}
+                    suppliers={suppliers}
                 />
                 : <ProductModal
                     setProductForModal={setProductForModal}
                     productForModal={productForModal}
                     setEditOpen={setEditOpen}
-                    handleDelete={handleDelete}
+                    deleteProduct={deleteProduct}
+                    categories={categories}
+                    suppliers={suppliers}
                 />}
             {createOpen
                 ? <CreateProductModal
                     setCreateOpen={setCreateOpen}
                     createNewProduct={createNewProduct}
                     createOpen={createOpen}
+                    categories={categories}
+                    suppliers={suppliers}
                 />
                 : null}
         </ScrollView>

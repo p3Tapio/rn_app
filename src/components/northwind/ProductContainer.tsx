@@ -1,11 +1,10 @@
 import React from 'react'
 import { View, Text, Pressable, Image } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 import { styles } from '../../Styles';
-import { ContainerProps } from './productType';
+import { ProductContainerProps } from './productType';
 
+const ProductContainer: React.FC<ProductContainerProps> = ({ product, setProductForModal, categories }: ProductContainerProps) => {
 
-const ProductContainer: React.FC<ContainerProps> = ({ product, setProductForModal }: ContainerProps) => {
     return (
         <Pressable
             style={({ pressed }) => [{ backgroundColor: pressed ? 'lightgray' : 'white' }]}
@@ -18,7 +17,7 @@ const ProductContainer: React.FC<ContainerProps> = ({ product, setProductForModa
                     />
                     <View style={{ flexDirection: 'column', marginLeft: 10 }}>
                         <Text style={{ fontWeight: 'bold' }}>{product.productName}</Text>
-                        <Text>{product.categoryId}</Text>
+                        <Text>{categories.filter(x => x.categoryId === product.categoryId).map(y => { return y.categoryName })}</Text>
                         <View style={{ flexDirection: 'row' }}>
                             <Text>{product.unitPrice === null ? 'No unit price' : `\u00E1 ${product.unitPrice}\u20AC, `}</Text>
                             <Text> {product.quantityPerUnit === null ? 'No quantity info' : product.quantityPerUnit}</Text>

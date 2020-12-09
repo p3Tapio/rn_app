@@ -94,6 +94,14 @@ export const styles = StyleSheet.create({
     errorText: {
         fontSize: 10,
         color: 'red'
+    },
+    pickerDrop: {
+        transform: [
+            { scaleX: 0.8 },
+            { scaleY: 0.8 },
+        ],
+        height: 30, width: '60%',
+        marginLeft: 90, marginTop: -5,
     }
 
 });

@@ -2,13 +2,15 @@ import React, { useState } from 'react'
 import { Modal, Text, View, TouchableHighlight } from 'react-native'
 import { styles } from '../../Styles';
 import { CreateModalProps, BaseProduct } from './productType';
-import { AntDesign, Foundation } from '@expo/vector-icons';
+import {  Foundation } from '@expo/vector-icons';
 import { Switch, TextInput } from 'react-native-gesture-handler';
-import { priceValidation, nameValidation } from './validators';
+import { numericValidation, nameValidation, stringValidation, urlValidation } from './validators';
+import CategoryPicker from './pickers/CategoryPicker';
+import SupplierPicker from './pickers/SupplierPicker';
 
-const CreateProductModal: React.FC<CreateModalProps> = ({ setCreateOpen, createOpen, createNewProduct }: CreateModalProps) => {
+const CreateProductModal: React.FC<CreateModalProps> = ({ setCreateOpen, createOpen, createNewProduct, categories, suppliers }: CreateModalProps) => {
 
-    const initialNewProduct:BaseProduct = {
+    const initialNewProduct: BaseProduct = {
         productName: '', supplierId: undefined, categoryId: undefined, quantityPerUnit: '',
         unitPrice: '', unitsInStock: undefined, unitsOnOrder: undefined,
         reorderLevel: undefined, discontinued: false, imageLink: '',
@@ -16,15 +18,16 @@ const CreateProductModal: React.FC<CreateModalProps> = ({ setCreateOpen, createO
 
     const [focused, setFocused] = useState<string | null>(null)
     const [newProduct, setNewProduct] = useState<BaseProduct>(initialNewProduct);
-
-    console.log('newProduct', newProduct)
-
+    const [dropdownCategory, setDropdownCategory] = useState<number>(0)
+    const [categoryWarning, setCategoryWarning] = useState<boolean>(false)
+    const [dropdownSupplier, setDropdownSupplier] = useState<number>(0);
+    const [supplierWarning, setSupplierWarning] = useState<boolean>(false)
+    
     return (
         <Modal animationType="slide" transparent={true} visible={createOpen}>
             <View style={{ flex: 1, justifyContent: 'space-between', marginTop: 10 }}>
                 <View style={{ margin: 10, backgroundColor: 'white', borderRadius: 20, padding: 20, shadowColor: 'black', shadowOffset: { width: 1, height: 2 } }}>
                     <View style={{ margin: 10, marginRight: 10 }}>
-
                         <Text style={{ fontWeight: 'bold', fontSize: 20, borderBottomWidth: 1, marginBottom: 10 }}>Luo uusi tuotetieto</Text>
                         <View style={styles.productDetailRow}>
                             <Text>Nimi: </Text>
@@ -33,8 +36,8 @@ const CreateProductModal: React.FC<CreateModalProps> = ({ setCreateOpen, createO
                                 autoCapitalize="none" selectTextOnFocus={true}
                                 onChangeText={(text) => setNewProduct({ ...newProduct, productName: text })} />
                         </View>
-                        <View style={nameValidation(newProduct.productName) ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
-                            {!nameValidation(newProduct.productName) && <Text style={styles.errorText}>Tuotteen nimi puuttuu tai on liian lyhyt!</Text>}
+                        <View style={(nameValidation(newProduct.productName) || newProduct.productName === '') ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!nameValidation(newProduct.productName) && newProduct.productName !== '') && <Text style={styles.errorText}>Tuotteen nimi on liian lyhyt!</Text>}
                         </View>
                         <View style={styles.productDetailRow}>
                             <Text>Hinta: </Text>
@@ -42,10 +45,9 @@ const CreateProductModal: React.FC<CreateModalProps> = ({ setCreateOpen, createO
                                 onFocus={() => setFocused('hinta')} onBlur={() => setFocused(null)}
                                 autoCapitalize="none" selectTextOnFocus={true} keyboardType="numeric"
                                 onChangeText={(text) => setNewProduct({ ...newProduct, unitPrice: text })} />
-
                         </View>
-                        <View style={priceValidation(newProduct.unitPrice.toString()) ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
-                            {!priceValidation(newProduct.unitPrice.toString()) && <Text style={styles.errorText}>Anna hinta muodossa n.zz!</Text>}
+                        <View style={(numericValidation(newProduct.unitPrice) || newProduct.unitPrice === '') ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!numericValidation(newProduct.unitPrice) && newProduct.unitPrice !== '') && <Text style={styles.errorText}>Anna hinta muodossa n.zz!</Text>}
                         </View>
                         <View style={styles.productDetailRow}>
                             <Text>Varastossa: </Text>
@@ -54,6 +56,9 @@ const CreateProductModal: React.FC<CreateModalProps> = ({ setCreateOpen, createO
                                 autoCapitalize="none" selectTextOnFocus={true} keyboardType="numeric"
                                 onChangeText={(text) => setNewProduct({ ...newProduct, unitsInStock: Number(text) })} />
                         </View>
+                        <View style={(numericValidation(newProduct.unitsInStock) || newProduct.unitsInStock === undefined) ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!numericValidation(newProduct.unitsInStock) && newProduct.unitsInStock !== undefined) && <Text style={styles.errorText}>Anna varastomäärä numeroina!</Text>}
+                        </View>
                         <View style={styles.productDetailRow}>
                             <Text>Hälytysraja: </Text>
                             <TextInput style={focused === 'raja' ? styles.textInputFocused : styles.textInputField}
@@ -61,13 +66,18 @@ const CreateProductModal: React.FC<CreateModalProps> = ({ setCreateOpen, createO
                                 autoCapitalize="none" selectTextOnFocus={true} keyboardType="numeric"
                                 onChangeText={(text) => setNewProduct({ ...newProduct, reorderLevel: Number(text) })} />
                         </View>
+                        <View style={(numericValidation(newProduct.reorderLevel) || newProduct.reorderLevel === undefined) ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!numericValidation(newProduct.reorderLevel) && newProduct.reorderLevel !== undefined) && <Text style={styles.errorText}>Anna hälytysraja muodossa x.xx!</Text>}
+                        </View>
                         <View style={styles.productDetailRow}>
-                            <Text>Kategoria: </Text>
-                            {/* dropdown */}
-                            <TextInput style={focused === 'kate' ? styles.textInputFocused : styles.textInputField}
-                                onFocus={() => setFocused('kate')} onBlur={() => setFocused(null)}
+                            <Text>Tilauksessa: </Text>
+                            <TextInput style={focused === 'tilauksia' ? styles.textInputFocused : styles.textInputField}
+                                onFocus={() => setFocused('tilauksia')} onBlur={() => setFocused(null)}
                                 autoCapitalize="none" selectTextOnFocus={true} keyboardType="numeric"
-                                onChangeText={(text) => setNewProduct({ ...newProduct, categoryId: Number(text) })} />
+                                onChangeText={(text) => setNewProduct({ ...newProduct, unitsOnOrder: Number(text) })} />
+                        </View>
+                        <View style={(numericValidation(newProduct.unitsOnOrder) || newProduct.unitsOnOrder === undefined) ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!numericValidation(newProduct.unitsOnOrder) && newProduct.unitsOnOrder !== undefined) && <Text style={styles.errorText}>Tarkasta tilausmäärän muoto</Text>}
                         </View>
                         <View style={styles.productDetailRow}>
                             <Text>Määrä: </Text>
@@ -76,12 +86,8 @@ const CreateProductModal: React.FC<CreateModalProps> = ({ setCreateOpen, createO
                                 value={newProduct.quantityPerUnit} autoCapitalize="none" selectTextOnFocus={true}
                                 onChangeText={(text) => setNewProduct({ ...newProduct, quantityPerUnit: text })} />
                         </View>
-                        <View style={styles.productDetailRow}>
-                            <Text>Toimittaja: </Text>
-                            <TextInput style={focused === 'toim' ? styles.textInputFocused : styles.textInputField}
-                                onFocus={() => setFocused('toim')} onBlur={() => setFocused(null)}
-                                autoCapitalize="none" selectTextOnFocus={true} keyboardType="numeric"
-                                onChangeText={(text) => setNewProduct({ ...newProduct, supplierId: Number(text) })} />
+                        <View style={(stringValidation(newProduct.quantityPerUnit) || newProduct.quantityPerUnit === '') ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!stringValidation(newProduct.quantityPerUnit) && newProduct.quantityPerUnit !== '') && <Text style={styles.errorText}>Anna hälytysraja muodossa x.xx!</Text>}
                         </View>
                         <View style={styles.productDetailRow}>
                             <Text>Kuvalinkki: </Text>
@@ -89,6 +95,37 @@ const CreateProductModal: React.FC<CreateModalProps> = ({ setCreateOpen, createO
                                 onFocus={() => setFocused('linkki')} onBlur={() => setFocused(null)}
                                 autoCapitalize="none" selectTextOnFocus={true}
                                 onChangeText={(text) => setNewProduct({ ...newProduct, imageLink: text })} />
+                        </View>
+                        <View style={(urlValidation(newProduct.imageLink) || newProduct.imageLink === '') ? { marginTop: 4 } : { alignSelf: 'flex-end', marginTop: -10 }}>
+                            {(!urlValidation(newProduct.imageLink) && newProduct.imageLink !== '') && <Text style={styles.errorText}>Tarkasta linkki! </Text>}
+                        </View>
+                        <View style={styles.productDetailRow}>
+                            <Text>Kategoria: </Text>
+                            <CategoryPicker
+                                categories={categories}
+                                setDropdownCategory={setDropdownCategory}
+                                dropdownCategory={dropdownCategory}
+                                setCategoryWarning={setCategoryWarning}
+                                setNewProduct={setNewProduct}
+                                newProduct={newProduct}
+                            />
+                        </View>
+                        <View style={!categoryWarning ? { marginTop: -1, marginBottom: 5 } : { alignSelf: 'flex-end', marginTop: -15, marginRight: 35, marginBottom: 5 }}>
+                            {categoryWarning && <Text style={styles.errorText}>Aseta tuotekategoria</Text>}
+                        </View>
+                        <View style={styles.productDetailRow}>
+                            <Text>Toimittaja: </Text>
+                            <SupplierPicker
+                                suppliers={suppliers}
+                                setDropdownSupplier={setDropdownSupplier}
+                                dropdownSupplier={dropdownSupplier}
+                                setSupplierWarning={setSupplierWarning}
+                                setNewProduct={setNewProduct}
+                                newProduct={newProduct}
+                            />
+                        </View>
+                        <View style={!supplierWarning ? { marginTop: -1, marginBottom: 5 } : { alignSelf: 'flex-end', marginTop: -15, marginRight: 35, marginBottom: 5 }}>
+                            {supplierWarning && <Text style={styles.errorText}>Aseta tuottaja</Text>}
                         </View>
                         <View style={styles.productDetailRow}>
                             <Text>Saatavilla: </Text>
@@ -110,6 +147,7 @@ const CreateProductModal: React.FC<CreateModalProps> = ({ setCreateOpen, createO
                             <Foundation name="save" size={30} color="black" />
                         </TouchableHighlight>
                     </View>
+
                 </View>
             </View>
         </Modal>
