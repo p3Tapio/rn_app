@@ -14,7 +14,6 @@ export const stringValidation = (value: string): boolean => {
     return true;
 }
 export const urlValidation = (value: string): boolean => {
-    console.log('value', value)
     const req = /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=_%.]+(?:png|jpg|jpeg|gif|svg)+$/
     if (!value && value === '') return true
     else if (value.match(req) === undefined || value.match(req) === null) return false

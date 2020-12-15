@@ -24,7 +24,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
                 Number(value) === 0 ? setCategoryWarning(true) : setCategoryWarning(false)
             }} >
             {editedCategories.map(c => (
-                <Picker.Item label={c.categoryName} value={c.categoryId} key={c.categoryId} />
+                <Picker.Item label={c.categoryId !== 0 ? `${c.categoryId} - ${c.categoryName}` : c.categoryName} value={c.categoryId} key={c.categoryId} />
             ))}
         </Picker>
     )

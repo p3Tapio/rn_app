@@ -11,7 +11,6 @@ import TekstiTV from './src/components/TekstiTV';
 
 import { NavigationContainer } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { Icon } from 'react-native-elements';
 import ProductList from './src/components/northwind/ProductList';
 
 const App: React.FC = () => {
@@ -32,11 +31,11 @@ const App: React.FC = () => {
                 }}
             >
                 <Tab.Screen name="NWProducts" component={ProductList} options={{ tabBarIcon: () => <Octicons name="database" color="#333" size={inconSize} /> }} />
-                {/* <Tab.Screen name="Hello World" component={HelloWorld} options={{ tabBarIcon: () => <FontAwesome5 name="chess-pawn" color="#333" size={inconSize} /> }} /> */}
-                {/* <Tab.Screen name="joku kuva" component={ImageExample} options={{ tabBarIcon: () => <Octicons name="home" color="#333" size={inconSize} /> }} /> */}
+                <Tab.Screen name="Hello World" component={HelloWorld} options={{ tabBarIcon: () => <FontAwesome5 name="chess-pawn" color="#333" size={inconSize} /> }} />
+                <Tab.Screen name="joku kuva" component={ImageExample} options={{ tabBarIcon: () => <Octicons name="home" color="#333" size={inconSize} /> }} />
                 <Tab.Screen name="Flat Listi" component={FlatListView} options={{ tabBarIcon: () => <Octicons name="database" color="#333" size={inconSize} /> }} />
                 <Tab.Screen name="Hello input" component={HelloInput} options={{ tabBarIcon: () => <Octicons name="keyboard" color="#333" size={inconSize} /> }} />
-                {/* <Tab.Screen name="Teksti tv100" component={TekstiTV100} options={{ tabBarIcon: () => <Octicons name="database" color="#333" size={inconSize} /> }} /> */}
+                <Tab.Screen name="Teksti tv100" component={TekstiTV100} options={{ tabBarIcon: () => <Octicons name="database" color="#333" size={inconSize} /> }} />
                 <Tab.Screen name="TekstiTv" component={TekstiTV} options={{ tabBarIcon: () => <Octicons name="database" color="#333" size={inconSize} /> }} />
             </Tab.Navigator>
         </NavigationContainer>

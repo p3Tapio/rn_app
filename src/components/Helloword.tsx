@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Text, View } from 'react-native';
-import { styles } from './Styles'
+import { styles } from '../Styles';
 
 export default function HelloWorld() {
 

@@ -6,9 +6,8 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 const FlatListView = () => {
     const [jsonData, setJsonData] = useState(undefined)
 
-
     const getData = async () => {
-        console.log('ScreenOrientation', await ScreenOrientation.getOrientationAsync())
+       
         if (!jsonData) {
             fetch('https://jsonplaceholder.typicode.com/todos')
                 .then((res) => res.json())
@@ -19,7 +18,7 @@ const FlatListView = () => {
         }
     }
     // useEffect(() => { getData(); }, [])
-
+    // console.log('ScreenOrientation', await ScreenOrientation.getOrientationAsync())
     return (
         <View style={styles.mainContainer}>
             <View style={styles.itemContainer2}>

@@ -59,7 +59,6 @@ const ProductList: React.FC = () => {
     }
 
     const createNewProduct = (newProduct: BaseProduct) => {
-        // if (newProduct && priceValidation(newProduct.unitPrice.toString()) && nameValidation(newProduct.productName)) {
         if (newProduct && submitValidation(newProduct)) {
             const productJson: any = JSON.stringify({
                 ...newProduct,
@@ -73,7 +72,7 @@ const ProductList: React.FC = () => {
             }).then(res => res.json())
                 .then(json => {
                     if (json) {
-                        console.log('result: ', json)
+                        console.log('Result: ', json)
                         setCreateOpen(false)
                         Alert.alert('Onnistui!', `Tuote ${newProduct.productName} lisätty tietoihin`, [{ text: 'sulje' }])
                         getProducts().then(x => {

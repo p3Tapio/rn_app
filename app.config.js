@@ -17,7 +17,7 @@ export default {
         extra: {
             yleApiKey: process.env.YLE_API_KEY,
             yleApiId: process.env.YLE_API_ID,
-            // baseUrl: process.env.TUNNEL,
+            tunnelUrl: process.env.TUNNEL,
             baseUrl:  process.env.LOCAL,
             careeriaUrl: process.env.CAREERIA
         }

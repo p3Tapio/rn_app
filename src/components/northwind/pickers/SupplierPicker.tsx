@@ -21,7 +21,7 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
                 Number(value) === 0 ? setSupplierWarning(true) : setSupplierWarning(false)
             }} >
             {suppliers.map(s => (
-                <Picker.Item label={s.companyName} value={s.supplierId} key={s.supplierId} />
+                <Picker.Item label={s.supplierId !== '0' ? `${s.supplierId} - ${s.companyName}` : s.companyName} value={s.supplierId} key={s.supplierId} />
             ))}
         </Picker>
     )
